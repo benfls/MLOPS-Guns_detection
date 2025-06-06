@@ -1,0 +1,9 @@
+pandas
+numpy
+setuptools
+kagglehub
+opencv-python-headless
+matplotlib
+albumentations
+torch
+torchvision

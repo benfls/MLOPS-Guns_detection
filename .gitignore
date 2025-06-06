@@ -1,0 +1,7 @@
+venv/
+artifacts/raw/Images/*
+!artifacts/raw/Images/.gitkeep
+artifacts/row/Labels/*
+!artifacts/row/Labels/.gitkeep
+logs/
+MLOPS_PROJECT_4.egg-info/
