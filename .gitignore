@@ -1,7 +1,23 @@
+# Exclude Python virtual environment directory
 venv/
+
+# Exclude artifacts except .gitkeep
 artifacts/raw/Images/*
 !artifacts/raw/Images/.gitkeep
-artifacts/row/Labels/*
-!artifacts/row/Labels/.gitkeep
+artifacts/raw/Labels/*
+!artifacts/raw/Labels/.gitkeep
+
+# Exclude logs directory
 logs/
+
+# Exclude egg-info directory
 MLOPS_PROJECT_4.egg-info/
+
+# Exclude all __pycache__ directories in any location
+**/__pycache__/
+
+# Optionally exclude all .pyc files
+*.pyc
+
+# Exclude .DS_Store files (for macOS)
+.DS_Store

@@ -14,10 +14,9 @@ class GunDataset(Dataset):
         self.image_path = os.path.join(root, "Images")
         self.label_path = os.path.join(root, "Labels/")
 
+        self.img_name = sorted([f for f in os.listdir(self.image_path) if f.endswith('.jpeg')])
 
-        self.img_name = sorted(os.listdir(self.image_path))
-        self.label_name = sorted(os.listdir(self.label_path))
-
+        self.label_name = sorted([f for f in os.listdir(self.label_path) if f.endswith('.txt')])
         self.device = device
 
         logger.info("Data processing Initialized ....")

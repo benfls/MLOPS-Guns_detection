@@ -7,3 +7,4 @@ matplotlib
 albumentations
 torch
 torchvision
+tensorboard

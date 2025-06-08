@@ -1,0 +1,123 @@
+import os
+import torch
+from torch.utils.data import DataLoader, random_split
+from src.model_architecture import FasterRCNNModel
+from torch import optim
+from src.custom_exception import CustomException
+from src.logger import get_logger
+from src.data_processing import GunDataset
+from torch.utils.tensorboard import SummaryWriter
+import time
+
+logger = get_logger(__name__)
+
+model_save_path = "artifacts/models/"
+os.makedirs(model_save_path, exist_ok=True)
+
+class ModelTraining:
+
+    def __init__(self, model_class, num_classes, learning_rate, epochs, dataset_path, device):
+        self.model_class = model_class
+        self.num_classes = num_classes
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.dataset_path = dataset_path
+        self.device = device
+
+        try:
+            self.model = self.model_class(self.num_classes, self.device).model
+            self.model.to(self.device)
+            logger.info("Model moved to device.")
+
+            self.optimizer = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+            logger.info("Optimizer as been initialized...")
+        
+        except Exception as e:
+            logger.error(f"Error initializing model or optimizer: {e}")
+            raise CustomException(f"Error initializing model or optimizer: {e}")
+        
+    def collate_fn(self, batch):
+        try:
+            return tuple(zip(*batch))
+        except Exception as e:
+            logger.error(f"Error in collate function: {e}")
+            raise CustomException(f"Error in collate function: {e}")
+        
+    def split_dataset(self):
+        try:
+            dataset = GunDataset(self.dataset_path, self.device)
+
+            dataset = torch.utils.data.Subset(dataset, range(5))
+
+            train_size = int(0.8 * len(dataset))
+            val_size = len(dataset) - train_size
+
+            train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+
+            train_loader = DataLoader(train_dataset, batch_size=3, shuffle=True, num_workers=0, collate_fn=self.collate_fn)
+            val_loader = DataLoader(val_dataset, batch_size=3, shuffle=True, num_workers=0, collate_fn=self.collate_fn)
+
+            logger.info("Dataset splitted successfully.")
+
+            return train_loader, val_loader
+        except Exception as e:
+            logger.error(f"Error in splitting dataset: {e}")
+            raise CustomException(f"Error in splitting dataset: {e}")
+        
+    def train(self):
+        try:
+            train_loader, val_loader = self.split_dataset()
+            print(f"Train dataset size: {len(train_loader.dataset)}")
+            print(f"Validation dataset size: {len(val_loader.dataset)}")
+            logger.info("Starting training process...")
+
+            for epoch in range(self.epochs):
+                logger.info(f"Starting epoch {epoch}")
+                self.model.train()
+
+                for i, (images, targets) in enumerate(train_loader):
+                    self.optimizer.zero_grad()
+                    losses = self.model(images, targets)       
+
+                    if isinstance(losses, dict):
+                        total_loss = 0
+                        for key, value in losses.items():
+                            if isinstance(value, torch.Tensor):
+                                total_loss += value
+                        if total_loss==0:
+                            logger.error("There was error in losses capturing")
+                            raise ValueError("Total value is zero ....")
+                        
+                    else:
+                        total_loss = losses[0]
+
+                    total_loss.backward()
+                    self.optimizer.step()
+
+            self.model.eval()
+            with torch.no_grad():
+                for images, targets in val_loader:
+                    val_losses = self.model(images, targets)
+                    logger.info(type(val_losses))
+                    logger.info(f"Validation losses: {val_losses}")
+            
+            model_path = os.path.join(model_save_path, "fasterrcnn.pth")
+            torch.save(self.model.state_dict(), model_path)
+            logger.info(f"Model saved successfully")
+
+        except Exception as e:
+            logger.error(f"Error during training: {e}")
+            raise CustomException(f"Error during training: {e}")
+        
+if __name__ == "__main__":
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    training = ModelTraining(
+        model_class=FasterRCNNModel,
+        num_classes=2,
+        learning_rate=1e-4,
+        epochs=1,
+        dataset_path="artifacts/raw/",
+        device=device
+    )
+
+    training.train()
