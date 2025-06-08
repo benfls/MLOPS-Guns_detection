@@ -24,6 +24,14 @@ class ModelTraining:
         self.dataset_path = dataset_path
         self.device = device
 
+        #### Tensorboard
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        self.log_dir = f"tensorboard_logs/{timestamp}"
+        os.makedirs(self.log_dir, exist_ok=True)
+
+        self.writer = SummaryWriter(log_dir=self.log_dir)
+         
+
         try:
             self.model = self.model_class(self.num_classes, self.device).model
             self.model.to(self.device)
