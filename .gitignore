@@ -21,3 +21,5 @@ MLOPS_PROJECT_4.egg-info/
 
 # Exclude .DS_Store files (for macOS)
 .DS_Store
+
+artifacts/models/*.pth
